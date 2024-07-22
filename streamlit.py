@@ -144,7 +144,7 @@ def no_bs_recipe(url):
     st.write(remove_wierd_word(add_new_lines_ingredients(clean_up(ingredients),html_translation_dict)))
     
     instructions = plain_page[combined_locations[t][0]:]
-    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like',instructions)]
+    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like|Email',instructions)]
 
     st.write('\n\nINSTRUCTIONS\n\n')
     if stop_instructions_pos == []:
