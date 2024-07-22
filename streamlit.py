@@ -67,8 +67,9 @@ def add_new_lines_ingredients(string, html_translation_dict):
 
     
 def add_new_lines_instructions(string,html_translation_dict):
-    translation_dict = {'Notes':'  \nNotes',
-                'Tips':'  \nTips',
+    translation_dict = {'Notes':'  \nNotes  \n',
+                'Tips':'  \nTips  \n',
+                'Nutrition':'  \nNutrition  \n',
                 '\n':'  \n'
                }
     translation_dict.update(html_translation_dict)
@@ -127,7 +128,7 @@ def no_bs_recipe(url):
         st.write(cook_time.group(0)+'\n')
     temp = [i for i, x in enumerate(combined_locations) if x[-1] == 'instruction' and combined_locations[i-1][-1] == 'ingredient']
     if temp == [] or temp == [0]:
-        st.write('Sorry, trouble recipe on this page')
+        st.write('Sorry, we had trouble finding the recipe on this page! Note that Food Networks blocks web scraping, so this app will not work with Food Network.')
         return('Error')
     
     st.write('INGREDIENTS\n\n')
@@ -152,8 +153,8 @@ def no_bs_recipe(url):
         st.write(remove_wierd_word(add_new_lines_instructions(clean_up(instructions[:stop_instructions_pos[0]]),html_translation_dict)))
         
         
-st.write('Type a recipe URL here and then hit enter')
-url = st.text_input('url')
+st.write("No BS Recipes! No Ads, no pop ups, no life story.")
+url = st.text_input("Copy and paste a recipe's URL in the box below and then hit enter")
 
 no_bs_recipe(url)
         
