@@ -112,7 +112,7 @@ def no_bs_recipe(url):
     page = response.text
     plain_page = re.sub('<[^>]*>','',page)
     ingredient_locations = [(m.span()) for m in re.finditer('Ingredients|INGREDIENTS',plain_page)]
-    instruction_locations = [(m.span()) for m in re.finditer('Instructions|INSTRUCTIONS|instructions|Directions|DIRECTIONS|directions|HOW TO|How To Make|How to Make|Steps|STEPS|STEP 1|Step 1|Method',plain_page)]
+    instruction_locations = [(m.span()) for m in re.finditer('Instructions|INSTRUCTIONS|Directions|DIRECTIONS|HOW TO|How To Make|How to Make|Steps|STEPS|STEP 1|Step 1|Method',plain_page)]
     instruction_locations = [a + ('instruction',) for a in instruction_locations]
     ingredient_locations = [a + ('ingredient',) for a in ingredient_locations]
     combined_locations = instruction_locations + ingredient_locations
@@ -128,13 +128,13 @@ def no_bs_recipe(url):
         st.write(cook_time.group(0)+'\n')
     temp = [i for i, x in enumerate(combined_locations) if x[-1] == 'instruction' and combined_locations[i-1][-1] == 'ingredient']
     if temp == [] or temp == [0]:
-        st.write('Sorry, we had trouble finding the recipe on this page! Note that Food Networks blocks web scraping, so this app will not work with Food Network.')
+        st.write('Sorry, we had trouble finding the recipe on this page! Note that Food Network blocks web scraping, so this app will not work with Food Network.')
         return('Error')
     
     st.write('INGREDIENTS\n\n')
     t = max(temp)
     ingredients = plain_page[combined_locations[t-1][0]:combined_locations[t][0]]
-    if sum(c in ['{','}','[',']'] for c in html.unescape(plain_page[combined_locations[t-1][0]:combined_locations[t][0]]))>10 and len(temp)>1:
+    if sum([c in ['{','}','[',']'] for c in html.unescape(plain_page[combined_locations[t-1][0]:combined_locations[t][0]])])>4 and len(temp)>1:
         temp.remove(t)
         def get_num_digits(t):
             return sum(c.isdigit() for c in html.unescape(plain_page[combined_locations[t-1][0]:combined_locations[t][0]]))
