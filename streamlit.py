@@ -112,7 +112,7 @@ def no_bs_recipe(url):
     page = response.text
     plain_page = re.sub('<[^>]*>','',page)
     ingredient_locations = [(m.span()) for m in re.finditer('Ingredients|INGREDIENTS',plain_page)]
-    instruction_locations = [(m.span()) for m in re.finditer('Instructions|INSTRUCTIONS|instructions|Directions|DIRECTIONS|directions|how to|HOW TO|How To|How to|Steps|STEPS|STEP 1|Step 1|Method',plain_page)]
+    instruction_locations = [(m.span()) for m in re.finditer('Instructions|INSTRUCTIONS|instructions|Directions|DIRECTIONS|directions|HOW TO|How To Make|How to Make|Steps|STEPS|STEP 1|Step 1|Method',plain_page)]
     instruction_locations = [a + ('instruction',) for a in instruction_locations]
     ingredient_locations = [a + ('ingredient',) for a in ingredient_locations]
     combined_locations = instruction_locations + ingredient_locations
