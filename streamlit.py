@@ -69,26 +69,27 @@ def add_new_lines_ingredients(string, html_translation_dict):
 def add_new_lines_instructions(string,html_translation_dict):
     translation_dict = {'Notes':'  \nNotes  \n',
                 'Tips':'  \nTips  \n',
-                'Nutrition':'  \nNutrition  \n',
-                '\n':'  \n'
+                #'Nutrition':'  \nNutrition  \n',
+                '\n':'  \n',
+                'Recommendations':'  \nRecommendations  \n'
                }
     translation_dict.update(html_translation_dict)
     # loop through the dictionary and replace each character in the string
     for key, value in translation_dict.items():
         string = string.replace(key, value)
     string=html.unescape(string)
-    starts = [(m.start()) for m in re.finditer('Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Sprinkle |Sift |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refridgerate |Microwave |Toast |Grill |Chill |Sauté |Saute |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel |Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Using |Use |Then |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet ',string)]
-    string = list(string)
+    starts = [(m.start()) for m in re.finditer('Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Sprinkle |Sift |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refridgerate |Microwave |Toast |Grill |Chill |Sauté |Saute |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel |Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Using |Use |Then |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer |Spread |Flip |Rest |Prepare |Prior to |Set up ',string)]
+    string_list = list(string)
     offset=0
     for s in starts:
-        string.insert(s+offset,'  \n  \n '+str(offset+1)+') ')
+        string_list.insert(s+offset,'  \n  \n '+str(offset+1)+') ')
         offset += 1
-    return(('').join(string))
+    return(('').join(string_list))
 
 def clean_up(string):
-    string = re.sub('#[a-zA-Z0-9]*','',string)
-    string = re.sub('[^\s]*:[\s]*','',string)
-    string = re.sub('{[^\s]}*}','',string)
+    string = re.sub('#[a-zA-Z0-9]+','',string)
+    string = re.sub('[^\s]+:[^\s\n]+','',string)
+    string = re.sub('{[^\s]}+}','',string)
     #string = re.sub('\.[^\s]','\. ',string)
     #string = re.sub('[\t\n]{5,}','\n\n',string)
     string = re.sub('\t','',string)
@@ -133,18 +134,19 @@ def no_bs_recipe(url):
     
     st.write('INGREDIENTS\n\n')
     t = max(temp)
-    ingredients = plain_page[combined_locations[t-1][0]:combined_locations[t][0]]
-    if sum([c in ['{','}','[',']'] for c in html.unescape(plain_page[combined_locations[t-1][0]:combined_locations[t][0]])])>4 and len(temp)>1:
+    ingredients = plain_page[combined_locations[t-1][1]:combined_locations[t][0]]
+
+    if (sum([c in ['{','}','[',']'] for c in html.unescape(plain_page[combined_locations[t-1][1]:combined_locations[t][0]])])>4 or len(ingredients)<20) and len(temp)>1:
         temp.remove(t)
         def get_num_digits(t):
-            return sum(c.isdigit() for c in html.unescape(plain_page[combined_locations[t-1][0]:combined_locations[t][0]]))
+            return sum(c.isdigit() for c in html.unescape(plain_page[combined_locations[t-1][1]:combined_locations[t][0]]))
         temp = sorted(temp,key=get_num_digits)
         t = temp[-1]
-        ingredients = plain_page[combined_locations[t-1][0]:combined_locations[t][0]]
+        ingredients = plain_page[combined_locations[t-1][1]:combined_locations[t][0]]
     st.write(remove_wierd_word(add_new_lines_ingredients(clean_up(ingredients),html_translation_dict)))
     
-    instructions = plain_page[combined_locations[t][0]:]
-    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like|Email',instructions)]
+    instructions = plain_page[combined_locations[t][1]:]
+    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like|Email|Nutrition',instructions)]
 
     st.write('\n\nINSTRUCTIONS\n\n')
     if stop_instructions_pos == []:
@@ -157,7 +159,6 @@ st.write("No BS Recipes! No Ads, no pop ups, no life story.")
 url = st.text_input("Copy and paste a recipe's URL in the box below and then hit enter")
 
 no_bs_recipe(url)
-        
 
 
 
