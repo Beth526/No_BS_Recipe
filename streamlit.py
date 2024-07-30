@@ -20,6 +20,10 @@ def fix_run_on_word(word):
         elif c.isupper() and word[i+3].islower():
             # Concatenate a space and the uppercase version of the character to the result
             result = result + " " + c.upper()
+        elif word[i+1].isnumeric() and not c.isnumeric():
+            result = result + " " + c
+        elif c != " " and word[i]==")":
+            result = result + " " + c
         else:
             # Concatenate the character to the result
             result = result + c
@@ -30,19 +34,31 @@ def remove_wierd_word(string):
     string = [w for w in string if w.find('[')==-1 and w.find(']')==-1 and w.find('{')==-1 and w.find('}')==-1]
     string = [w for w in string if w.find('@')==-1]
     string = [w for w in string if w.count('&')<2 and w.count(':')<2 and w.count('-')<2 and w.count(';')<2]
-    return((' ').join(string))
+    string = (' ').join(string)
+    string = re.sub(';[^\s\n]+','',string)
+    string = re.sub('[\d]+px','',string)
+    string = re.sub('[\d]+ px','',string)
+    return(string)
 
 def add_new_lines_ingredients(string, html_translation_dict):
     translation_dict = {
                 '1x':'',
                 '2x':'',
                 '3x':'',
-                '1.5x':'',
+                '1.5':'',
+                '1 x':'',
+                '2 x':'',
+                '3 x':'',
                 'Prevent your screen from going dark':'',
                 'Cook mode':'',
                 'Cook  Mode':'',
                 'Scale':'',
-                '\n':'  \n'
+                'prevent screen from going dark':'',
+                'Prevent screen from going dark':'',
+                'Copy to clipboard':'',
+                'US Customary Metric':'',
+                '\n':'  \n',
+                '\n                    ':'  \n'
                }
     translation_dict.update(html_translation_dict)
     # loop through the dictionary and replace each character in the string
@@ -53,16 +69,24 @@ def add_new_lines_ingredients(string, html_translation_dict):
     #starts = [(m.start()) for m in re.finditer('^(?!\n|/|-)\d+\.*\d*',string)]
     other_starts = [(m.start()-2) for m in re.finditer('(?<=\d)[¼½⅔⅓¾]',string)]
     other_starts2 = [(m.start()-1) for m in re.finditer('(?<!\d)[¼½⅔⅓¾]',string)]
-    undo = [(m.end()) for m in re.finditer('to |and |\(|or |-|\d ',string)]
-    undo2 = [(m.end()-1) for m in re.finditer('to |and |\([^\\d)]*|or |-|\d ',string)]
-    undo3 = [(m.end()-2) for m in re.finditer('to |and |\([^\\d)]*|or |-|\d ',string)]
+    undo = [(m.end()) for m in re.finditer('to |and |or |about |approximately |-|–|\d |\(|\([^\)]*\d|\([^\)]*[¼½⅔⅓¾]|\d',string)]
+    undo2 = [(m-1) for m in undo]
+    undo3 = [(m-2) for m in undo]
     all_starts = starts + other_starts + other_starts2
     string = list(string)
     offset=1
     for s in sorted(all_starts):
         if s not in undo+undo2+undo3:
             string.insert(s+offset,'  \n')
-            offset += 1    
+            offset += 1 
+
+    string = ('').join(string)
+    other_starts3 = [(m.start()) for m in re.finditer('\)[A-Za-z]|\d[A-Za-z]{3,}|[A-Za-z]\d',string)]
+    string = list(string)
+    offset=1
+    for s in sorted(other_starts3):
+        string.insert(s+offset,'  \n')
+        offset += 1 
     return(('').join(string))
 
     
@@ -71,14 +95,16 @@ def add_new_lines_instructions(string,html_translation_dict):
                 'Tips':'  \nTips  \n',
                 #'Nutrition':'  \nNutrition  \n',
                 '\n':'  \n',
-                'Recommendations':'  \nRecommendations  \n'
+                'Recommendations':'  \nRecommendations  \n',
+                'Equipment':'  \nEquipment   \n',
+                'Video':'  \nVideo   \n'
                }
     translation_dict.update(html_translation_dict)
     # loop through the dictionary and replace each character in the string
     for key, value in translation_dict.items():
         string = string.replace(key, value)
     string=html.unescape(string)
-    starts = [(m.start()) for m in re.finditer('Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Sprinkle |Sift |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refridgerate |Microwave |Toast |Grill |Chill |Sauté |Saute |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel |Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Using |Use |Then |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer |Spread |Flip |Rest |Prepare |Prior to |Set up ',string)]
+    starts = [(m.start()) for m in re.finditer('Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Divide |Sprinkle |Sift |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refridgerate |Microwave |Toast |Grill |Chill |Sauté |Saute |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel |Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Shape |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Take |Form |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Using |Use |Then |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer |Spread |Flip |Rest |Prepare |Prior to |Set up |Replace |Keep |To a |Gather |Set |If using |Loosen ',string)]
     string_list = list(string)
     offset=0
     for s in starts:
@@ -89,6 +115,7 @@ def add_new_lines_instructions(string,html_translation_dict):
 def clean_up(string):
     string = re.sub('#[a-zA-Z0-9]+','',string)
     string = re.sub('[^\s]+:[^\s\n]+','',string)
+    #string = re.sub('[^\s]+;[^\s\n]+','',string)
     string = re.sub('{[^\s]}+}','',string)
     #string = re.sub('\.[^\s]','\. ',string)
     #string = re.sub('[\t\n]{5,}','\n\n',string)
@@ -112,8 +139,10 @@ def no_bs_recipe(url):
     response = requests.get(url, headers = user_agent)
     page = response.text
     plain_page = re.sub('<[^>]*>','',page)
-    ingredient_locations = [(m.span()) for m in re.finditer('Ingredients|INGREDIENTS',plain_page)]
-    instruction_locations = [(m.span()) for m in re.finditer('Instructions|INSTRUCTIONS|Directions|DIRECTIONS|HOW TO|How To Make|How to Make|Steps|STEPS|STEP 1|Step 1|Method',plain_page)]
+    ingredient_locations = [(m.span()) for m in re.finditer('Ingredients:*|INGREDIENTS:*|You Will Need:*|You will need:*',plain_page)]
+    if ingredient_locations == []:
+        ingredient_locations = [(m.span()) for m in re.finditer('Serves:*|Servings:*|Yields*:*',plain_page,flags=re.IGNORECASE)]
+    instruction_locations = [(m.span()) for m in re.finditer('Instructions:*|INSTRUCTIONS:*|Directions:*|DIRECTIONS:*|HOW TO:*|How To Make:*|How to Make:*|Steps:*|STEPS:*|STEP 1:*|Step 1:*|Method:*|You  Will  Need:*|Preparation:*',plain_page)]
     instruction_locations = [a + ('instruction',) for a in instruction_locations]
     ingredient_locations = [a + ('ingredient',) for a in ingredient_locations]
     combined_locations = instruction_locations + ingredient_locations
@@ -159,6 +188,7 @@ st.write("No BS Recipes! No Ads, no pop ups, no life story.")
 url = st.text_input("Copy and paste a recipe's URL in the box below and then hit enter")
 
 no_bs_recipe(url)
+        
 
 
 
