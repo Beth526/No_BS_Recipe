@@ -20,7 +20,7 @@ def fix_run_on_word(word):
         elif c.isupper() and word[i+3].islower():
             # Concatenate a space and the uppercase version of the character to the result
             result = result + " " + c.upper()
-        elif word[i+1].isnumeric() and not c.isnumeric():
+        elif word[i+1].isnumeric() and not (c.isnumeric() or c=="/" or c=="." or c=="-" or c=="–"):
             result = result + " " + c
         elif c != " " and word[i]==")":
             result = result + " " + c
@@ -65,31 +65,31 @@ def add_new_lines_ingredients(string, html_translation_dict):
     for key, value in translation_dict.items():
         string = string.replace(key, value)
     string=html.unescape(string)
-    starts = [(m.start()) for m in re.finditer('[^\n/]\d+\.*\d*',string)]
-    #starts = [(m.start()) for m in re.finditer('^(?!\n|/|-)\d+\.*\d*',string)]
-    other_starts = [(m.start()-2) for m in re.finditer('(?<=\d)[¼½⅔⅓¾]',string)]
-    other_starts2 = [(m.start()-1) for m in re.finditer('(?<!\d)[¼½⅔⅓¾]',string)]
-    undo = [(m.end()) for m in re.finditer('to |and |or |about |approximately |-|–|\d |\(|\([^\)]*\d|\([^\)]*[¼½⅔⅓¾]|\d',string)]
-    undo2 = [(m-1) for m in undo]
-    undo3 = [(m-2) for m in undo]
-    all_starts = starts + other_starts + other_starts2
-    string = list(string)
+    
+    starts = [(m.start()) for m in re.finditer('[^\n/]\d+\.*\d*',string)] #in front of all digit starts#
+    starts2 = [(m.start()-1) for m in re.finditer('(?<!\d)[¼½⅔⅓¾]',string)] #in front of those wierd fraction characters, if not preceeded by another digit
+
+    undo = [(m.end()-1) for m in re.finditer('to |and |or |about |approximately ',string)]
+    undo2 = [(m.end()-1) for m in re.finditer('-|–| - | – ',string)]
+    undo3 = [(m.end()-2) for m in re.finditer('\d\s+\d',string)]
+    undo4 = [(m.end()-1) for m in re.finditer('\(',string)]
+    undo5 = [(m.end()-2) for m in re.finditer('\([^\)\d]*\d',string)]
+    undo6 = [(m.end()-2) for m in re.finditer('/\s+\d',string)]
+    undo7 = [(m.end()-2) for m in re.finditer('\d\s+[¼½⅔⅓¾]',string)]
+
+    all_undos = undo + undo2 + undo3 + undo4 + undo5 + undo6 + undo7
+    all_starts = starts+starts2
+    all_starts = [i for i in all_starts if i not in all_undos] 
+    string_out = list(string)
     offset=1
     for s in sorted(all_starts):
-        if s not in undo+undo2+undo3:
-            string.insert(s+offset,'  \n')
-            offset += 1 
-
-    string = ('').join(string)
-    other_starts3 = [(m.start()) for m in re.finditer('\)[A-Za-z]|\d[A-Za-z]{3,}|[A-Za-z]\d',string)]
-    string = list(string)
-    offset=1
-    for s in sorted(other_starts3):
-        string.insert(s+offset,'  \n')
+        string_out.insert(s+offset,'  \n')
         offset += 1 
-    return(('').join(string))
+        
+    string_out = ('').join(string_out)
 
-    
+    return(string_out)
+
 def add_new_lines_instructions(string,html_translation_dict):
     translation_dict = {'Notes':'  \nNotes  \n',
                 'Tips':'  \nTips  \n',
