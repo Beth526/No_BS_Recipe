@@ -4,9 +4,21 @@ import re
 import urllib
 import html
 
+instruction_words = 'Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Divide |Sprinkle |Sift 
+|Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat 
+|Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refrigerate |Microwave |Toast |Grill |Chill |Sauté |Saute 
+|Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel 
+|Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Shape |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Take 
+|Form |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten 
+|Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape 
+|Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Rinse |Using |Use |Then 
+|Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer 
+|Spread |Flip |Rest |Prepare |Prior to |Set up |Replace |Keep |To a |Gather |Set |If using |Loosen |Pat |Repeat |Return |Divide |Increase |Decrease'
+
 html_translation_dict = {'&#x25a2;':'\n\n',
                 '&#39;&#3':'X ',
                 '&;': " ",
+                '& ;':" ",
                 '&#160;':' '                   
 }
 
@@ -90,7 +102,8 @@ def add_new_lines_ingredients(string, html_translation_dict):
 
     return(string_out)
 
-def add_new_lines_instructions(string,html_translation_dict):
+    
+def add_new_lines_instructions(string,html_translation_dict,instruction_words=instruction_words):
     translation_dict = {'Notes':'  \nNotes  \n',
                 'Tips':'  \nTips  \n',
                 #'Nutrition':'  \nNutrition  \n',
@@ -104,7 +117,12 @@ def add_new_lines_instructions(string,html_translation_dict):
     for key, value in translation_dict.items():
         string = string.replace(key, value)
     string=html.unescape(string)
-    starts = [(m.start()) for m in re.finditer('Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Divide |Sprinkle |Sift |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refrigerate |Microwave |Toast |Grill |Chill |Sauté |Saute |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel |Baste |Batter |Coat |Blanch |Brew |Braise |Brush |Deep fry |Shape |Deep-fry |Drain |Flambe |Filet |Fold |Grease |Grind |Take |Form |Juice |Juliene |Mash |Parboil |Poach |Press |Pickle |Pare |Quarter |Render |Reduce |Shred |Shuck |Toss |Steep |Sweeten |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Rinse |Using |Use |Then |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer |Spread |Flip |Rest |Prepare |Prior to |Set up |Replace |Keep |To a |Gather |Set |If using |Loosen |Pat |Repeat |Return ',string)]
+    notes_position = [(m.start()) for m in re.finditer('Notes|NOTES',string)]
+    if notes_position:
+        notes_position=notes_position[0]
+    if not notes_position:
+        notes_position=len(string)
+    starts = [(m.start()) for m in re.finditer(instruction_words,string[0:notes_position])]
     string_list = list(string)
     offset=0
     for s in starts:
@@ -134,7 +152,8 @@ def no_bs_recipe(url):
     path_parts = url_parts[2].rpartition('/')
     if len(path_parts[0])==0:
       path_parts = path_parts[::-1]
-    st.write(path_parts[0].replace('/',' ').replace('-',' ').upper()+'\n')
+    recipe_name = path_parts[0].replace('/',' ').replace('-',' ').upper()
+    st.write('**{}**\n'.format(recipe_name))
     user_agent = {'User-agent': 'Mozilla/5.0'}
     response = requests.get(url, headers = user_agent)
     page = response.text
@@ -161,7 +180,7 @@ def no_bs_recipe(url):
         st.write('Sorry, we had trouble finding the recipe on this page! Note that Food Network blocks web scraping, so this app will not work with Food Network.')
         return('Error')
     
-    st.write('INGREDIENTS\n\n')
+    st.write('**INGREDIENTS**\n\n')
     t = max(temp)
     ingredients = plain_page[combined_locations[t-1][1]:combined_locations[t][0]]
 
@@ -175,9 +194,9 @@ def no_bs_recipe(url):
     st.write(remove_wierd_word(add_new_lines_ingredients(clean_up(ingredients),html_translation_dict)))
     
     instructions = plain_page[combined_locations[t][1]:]
-    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like|Email|Nutrition',instructions)]
+    stop_instructions_pos = [(m.start()) for m in re.finditer('Comment|Facebook|Instagram|Rate|Rating|Subscribe|Review|Share|Tag|Print|Did you make this|Tried this recipe|Let us know if you|Did you love|Did you like|Email|Nutrition|Enjoy!|Keyword',instructions)]
 
-    st.write('\n\nINSTRUCTIONS\n\n')
+    st.write('\n\n**INSTRUCTIONS**\n\n')
     if stop_instructions_pos == []:
         st.write(remove_wierd_word(add_new_lines_instructions(clean_up(instructions),html_translation_dict)))
     else:
@@ -189,6 +208,3 @@ url = st.text_input("Copy and paste a recipe's URL in the box below and then hit
 
 no_bs_recipe(url)
         
-
-
-
