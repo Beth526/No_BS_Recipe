@@ -4,7 +4,7 @@ import re
 import urllib
 import html
 
-instruction_words = 'Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Divide |Sprinkle |Sift 
+instruction_words = """Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |Stir |Shake |Bring |Remove |Divide |Sprinkle |Sift 
 |Seperate |Place |Top |Pour |Fill |Spoon |Make |Place |Cut |Chop |Strain |Serve |In a |Peel |Puree |Wrap |Roll |Preheat |Pre-heat 
 |Melt |Marinate |Simmer |Steam |Prick |Process |With a |Store |Freeze |Refrigerate |Microwave |Toast |Grill |Chill |Sauté |Saute 
 |Cover |Allow |Defrost |Use |Boil |Chill |Rub |Swirl |Slice |Sear |Soak |Heat |While |Crumble |Scramble |Roast |Kneed |Dice |Peel 
@@ -13,7 +13,7 @@ instruction_words = 'Cook |Fry |Bake |Heat |Season |Combine |Add |Mix |Blend |St
 |Skewer |Score |Shell |Thicken |Whisk |Whip |Trim |Warm |Zest |Cover |Cure |Slather |Garnish |Crack |Tear |Beat |Shave |Scrape 
 |Glaze |Blacken |Char |Fluff |Dredge |Pulse |Macerate |Mince |Grate |Drizzle |Caramelise |Caramelize |Rinse |Using |Use |Then 
 |Next |Finally |Once |After |Before |First |Next |During |When |Line |Grease |Moisten |Wet |Transfer 
-|Spread |Flip |Rest |Prepare |Prior to |Set up |Replace |Keep |To a |Gather |Set |If using |Loosen |Pat |Repeat |Return |Divide |Increase |Decrease'
+|Spread |Flip |Rest |Prepare |Prior to |Set up |Replace |Keep |To a |Gather |Set |If using |Loosen |Pat |Repeat |Return |Divide |Increase |Decrease"""
 
 html_translation_dict = {'&#x25a2;':'\n\n',
                 '&#39;&#3':'X ',
@@ -123,6 +123,8 @@ def add_new_lines_instructions(string,html_translation_dict,instruction_words=in
     if not notes_position:
         notes_position=len(string)
     starts = [(m.start()) for m in re.finditer(instruction_words,string[0:notes_position])]
+    starts2 = [m for i,m in enumerate(starts[1:]) if m - starts[i-1] > 5]
+    starts = [starts[0]] + starts2
     string_list = list(string)
     offset=0
     for s in starts:
